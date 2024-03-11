@@ -1,5 +1,5 @@
 
-from hyperedge import HyperedgeType
+from .hyperedge import HyperedgeType
 from ..rbf.gaussian import gaussian_expansion
 from ..neighbor_list import get_nbrlist
 

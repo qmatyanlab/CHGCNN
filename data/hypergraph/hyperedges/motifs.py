@@ -1,4 +1,4 @@
-from hyperedge import HyperedgeType
+from .hyperedge import HyperedgeType
 from ..rbf.gaussian import gaussian_expansion
 
 from pymatgen.io.cif import CifParser
