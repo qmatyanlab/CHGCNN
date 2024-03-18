@@ -5,8 +5,8 @@ from torch_geometric.nn.conv import HeteroConv, HypergraphConv
 import torch_geometric.nn as nn
 import torch
 
-from convolutions.inter_conv import CHGInterConv
-from convolutions.agg_conv import CHGConv
+from .convolutions.inter_conv import CHGInterConv
+from .convolutions.agg_conv import CHGConv
 
 
 
