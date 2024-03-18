@@ -16,16 +16,19 @@ class CrystalHypergraphConv(torch.nn.Module):
 
         self.classification = classification
 
+        bond_hedge_dim = 40
+        motif_hedge_dim = 136 
         self.embed = nn.Linear(92, h_dim)
-        self.bembed = nn.Linear(hedge_dim, hidden_hedge_dim)
+        self.bembed = nn.Linear(bond_hedge_dim, hidden_hedge_dim)
+        self.membed = nn.linear(motif_hedge_dim, hidden_hedge_dim)
         self.convs_btb = torch.nn.ModuleList() 
         self.convs = torch.nn.ModuleList() 
         for _ in range(n_layers):
             conv = HeteroConv({
-                ('atom', 'in', 'bond'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = hedge_dim),
-                ('atom', 'in', 'motif'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = hedge_dim),
-                ('bond', 'in', 'motif'): CHGConv(node_fea_dim = hedge_dim, hedge_fea_dim = hedge_dim),
-                ('motif', 'in', 'bond'): CHGConv(node_fea_dim = hedge_dim, hedge_fea_dim = hedge_dim),
+                ('bond', 'contains', 'atom'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = hidden_hedge_dim),
+                ('motif', 'contains', 'atom'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = hidden_hedge_dim),
+#                ('bond', 'in', 'motif'): CHGConv(node_fea_dim = hedge_dim, hedge_fea_dim = hedge_dim),
+#                ('motif', 'contains', 'bond'): CHGConv(node_fea_dim = hedge_dim, hedge_fea_dim = hedge_dim),
             })
             self.convs.append(conv)
         self.l1 = nn.Linear(h_dim, hout_dim)
