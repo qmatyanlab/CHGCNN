@@ -11,22 +11,22 @@ from .convolutions.agg_conv import CHGConv
 
 
 class CrystalHypergraphConv(torch.nn.Module):
-    def __init__(self, classification, h_dim = 128, hedge_dim=40, hout_dim = 256, hidden_hedge_dim = 128, n_layers = 1):
+    def __init__(self, classification, h_dim = 128, hedge_dim=40, hout_dim = 256, hidden_hedge_dim = 128, n_layers = 3):
         super().__init__()
 
         self.classification = classification
 
         bond_hedge_dim = 40
-        motif_hedge_dim = 136 
-        self.embed = nn.Linear(92, h_dim)
+        motif_hedge_dim = 94 
+        self.embed = torch.nn.Embedding(101, h_dim)
         self.bembed = nn.Linear(bond_hedge_dim, hidden_hedge_dim)
-        self.membed = nn.linear(motif_hedge_dim, hidden_hedge_dim)
+        self.membed = nn.Linear(motif_hedge_dim, hidden_hedge_dim)
         self.convs_btb = torch.nn.ModuleList() 
         self.convs = torch.nn.ModuleList() 
         for _ in range(n_layers):
             conv = HeteroConv({
-                ('bond', 'contains', 'atom'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = hidden_hedge_dim),
-                ('motif', 'contains', 'atom'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = hidden_hedge_dim),
+                ('bond', 'contains', 'atom'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = bond_hedge_dim),
+                ('motif', 'contains', 'atom'): CHGConv(node_fea_dim = h_dim, hedge_fea_dim = motif_hedge_dim),
 #                ('bond', 'in', 'motif'): CHGConv(node_fea_dim = hedge_dim, hedge_fea_dim = hedge_dim),
 #                ('motif', 'contains', 'bond'): CHGConv(node_fea_dim = hedge_dim, hedge_fea_dim = hedge_dim),
             })
@@ -43,13 +43,12 @@ class CrystalHypergraphConv(torch.nn.Module):
     def forward(self, data):
         hyperedge_attrs_dict = data.hyperedge_attrs_dict
         hyperedge_index_dict = data.hyperedge_index_dict
-        num_nodes = data.num_nodes
-        num_bonds = data['bond'].hyperedge_attrs.shape[0]
+        print(data.mp_id)
         batch = data['atom'].batch
-        hyperedge_attrs_dict['atom'] = self.embed(hyperedge_attrs_dict['atom'])
+        hyperedge_attrs_dict['atom'] = self.embed(hyperedge_attrs_dict['atom'].long())
         for conv in self.convs:
-            hyperedge_attrs_dict, _ = conv(hyperedge_attrs_dict, hyperedge_index_dict, hyperedge_attrs_dict, num_nodes)
-            hyperedge_attrs_dict = {key: x.relu() for key, x in hyperedge_attrs_dict.items()}
+            hyperedge_attrs_dict = conv(hyperedge_attrs_dict, hyperedge_index_dict)
+            hyperedge_attrs_dict['atom'] = hyperedge_attrs_dict['atom'].relu()
         x = scatter(hyperedge_attrs_dict['atom'], batch, dim=0, reduce='mean')
         x = self.l1(x)
         if self.classification:

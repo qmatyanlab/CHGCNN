@@ -79,12 +79,53 @@ class Motifs(HyperedgeType):
                              'PP:6', 
                              'PB:7', 
                              'ST:7', 
-                             'ET:7', 'FO:7', 'C:8', 'SA:8', 'SBT:8', 'TBT:8', 'DD:8', 'DDPN:8', 'HB:8', 'BO_1:8', 'BO_2:8', 'BO_3:8', 'TC:9', 'TT_1:9', 'TT_2:9', 'TT_3:9', 'HD:9', 'TI:9', 'SMA:9', 'SS:9', 'TO_1:9', 'TO_2:9', 'TO_3:9', 'PP:10', 'PA:10', 'SBSA:10', 'MI:10', 'BS_1:10', 'BS_2:10', 'TBSA:10', 'PCPA:11', 'H:11', 'DI:11', 'I:12', 'PBP:12', 'TT:12', 'C:12', 'AC:12', 'SC:12', 'HP:12', 'HA:12']
+                             'ET:7', 
+                             'FO:7', 
+                             'C:8', 
+                             'SA:8', 
+                             'SBT:8', 
+                             'TBT:8', 
+                             'DD:8', 
+                             'DDPN:8', 
+                             'HB:8', 
+                             'BO_1:8', 
+                             'BO_2:8', 
+                             'BO_3:8', 
+                             'TC:9', 
+                             'TT_1:9', 
+                             'TT_2:9', 
+                             'TT_3:9', 
+                             'HD:9', 
+                             'TI:9', 
+                             'SMA:9', 
+                             'SS:9', 
+                             'TO_1:9', 
+                             'TO_2:9', 
+                             'TO_3:9', 
+                             'PP:10', 
+                             'PA:10', 
+                             'SBSA:10', 
+                             'MI:10', 
+                             'BS_1:10', 
+                             'BS_2:10', 
+                             'TBSA:10', 
+                             'PCPA:11', 
+                             'H:11', 
+                             'DI:11', 
+                             'I:12', 
+                             'PBP:12', 
+                             'TT:12', 
+                             'C:12', 
+                             'AC:12',
+                             'SC:12',
+                             'HP:12',
+                             'HA:12']
+
         
         if dir_or_nbrset != None:
             self.generate(dir_or_nbrset)
 
-    def generate(self, dir_or_nbrset, nn_strat = 'mind', lsop_types = [], ce_types = []):
+    def generate(self, dir_or_nbrset, nn_strat = 'crys', lsop_types = [], ce_types = []):
         if type(dir_or_nbrset) == str:
             struc = CifParser(dir_or_nbrset).get_structures()[0]
             nbr_list, nn_strat = get_nbrlist(struc, nn_strategy = nn_strat, max_nn=12)

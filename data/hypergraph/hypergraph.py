@@ -12,17 +12,17 @@ from pymatgen.core.structure import Structure
 import torch
 from torch_geometric.data import HeteroData
 
-from hyperedges.bonds import Bonds
-from hyperedges.triplets import Triplets
-from hyperedges.motifs import Motifs
-from hyperedges.unit_cell import UnitCell
+from .hyperedges.bonds import Bonds
+from .hyperedges.triplets import Triplets
+from .hyperedges.motifs import Motifs
+from .hyperedges.unit_cell import UnitCell
 
-from neighbor_list import get_nbrlist
+from .neighbor_list import get_nbrlist
 
 
 ### Define general crystal hypergraph class that accepts list of hyperedge types, mp_id string, and structure
 class Crystal_Hypergraph(HeteroData):
-    def __init__(self, struc, bonds = True, triplets = True, motifs = True, unit_cell = False,
+    def __init__(self, struc = None, bonds = True, triplets = True, motifs = True, unit_cell = False,
                  mp_id: str = None, target_dict = {}, strategy = 'Aggregate'):
         super().__init__()  
         
@@ -34,7 +34,7 @@ class Crystal_Hypergraph(HeteroData):
        
         if struc != None:
             ## Generate neighbor lists
-            nbr_mind, _ = get_nbrlist(struc, nn_strategy = 'mind', max_nn=12)
+            nbr_crys, _ = get_nbrlist(struc, nn_strategy = 'crys', max_nn=12)
             nbr_voro, _ = get_nbrlist(struc, nn_strategy = 'voro', max_nn=12)
         
             ## Generate bonds, triplets, motifs, and unit cell
@@ -46,7 +46,7 @@ class Crystal_Hypergraph(HeteroData):
                 triplets = Triplets(nbr_voro)
                 self.hyperedges.append(triplets)
             if motifs == True:
-                motifs = Motifs(nbr_mind, struc=struc)    
+                motifs = Motifs(nbr_crys, struc=struc)    
                 self.hyperedges.append(motifs)
             if unit_cell == True:
                 unit_cell = UnitCell(struc)
@@ -84,6 +84,7 @@ class Crystal_Hypergraph(HeteroData):
     ## Function used to add hyperedge_type to hypergraph
     def add_hyperedge_type(self, hyperedge_type):
         self[('atom','in',hyperedge_type.name)].hyperedge_index = torch.tensor(hyperedge_type.hyperedge_index).long()
+        self[(hyperedge_type.name,'contains','atom')].hyperedge_index = torch.flip(self[('atom','in',hyperedge_type.name)].hyperedge_index, dims=(0,)) 
         self[hyperedge_type.name].hyperedge_attrs = torch.tensor(np.stack(hyperedge_type.hyperedge_attrs)).float()
         self.orders.append(hyperedge_type.name)
 

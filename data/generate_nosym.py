@@ -4,7 +4,7 @@ import math
 import os
 import os.path as osp
 import csv
-import json
+import jsonpickle
 import itertools
 import time
 
@@ -17,20 +17,31 @@ from torch_geometric.data import Data, HeteroData
 from torch_geometric.loader import DataLoader
 from torch.utils.data import Dataset
 
-from .hypergraph.hypergraph import *
 from multiprocessing import Pool
 from tqdm import tqdm
 import numpy as np
 import math
 
-from .hypergraph.hyperedges.bonds import Bonds
-from .hypergraph.hyperedges.triplets import Triplets
-from .hypergraph.hyperedges.motifs import Motifs
-from .hypergraph.hyperedges.unit_cell import UnitCell
+try:
+    from .hypergraph.hyperedges.bonds import Bonds
+    from .hypergraph.hyperedges.triplets import Triplets
+    from .hypergraph.hyperedges.motifs import Motifs
+    from .hypergraph.hyperedges.unit_cell import UnitCell
 
-from .hypergraph.neighbor_list import get_nbrlist
+    from .hypergraph.neighbor_list import get_nbrlist
 
-from .hypergraph.hypergraph import *
+
+    from .hypergraph.hypergraph import Crystal_Hypergraph
+
+except:
+    from hypergraph.hyperedges.bonds import Bonds
+    from hypergraph.hyperedges.triplets import Triplets
+    from hypergraph.hyperedges.motifs import Motifs
+    from hypergraph.hyperedges.unit_cell import UnitCell
+
+    from hypergraph.neighbor_list import get_nbrlist
+
+    from hypergraph.hypergraph import Crystal_Hypergraph
 
 
 
@@ -63,7 +74,8 @@ class CrystalHypergraphDataset(Dataset):
         if report:
             start = time.time()
         struc = CifParser(crystal_path).get_structures()[0]
-        hgraph = Crystal_Hypergraph(struc, mp_id=mp_id, target_dict={'target':target})
+        hgraph = Crystal_Hypergraph(struc, mp_id=mp_id, target_dict={'target':torch.tensor(float(target))})
+        hgraph.struc = None
         if report:
             duration = time.time()-start
             print(f'Processed {mp_id} in {round(duration,5)} sec')
@@ -92,9 +104,13 @@ class InMemoryCrystalHypergraphDataset(Dataset):
 
     def __getitem__(self, index):
         mp_id = self.ids[index]
-        file_dir = osp.join(self.data_dir, mp_id + '_hg.pt')
-        data = torch.load(file_dir)
-        data = HeteroData().from_dict(data)
+        file_dir = osp.join('data', self.data_dir)
+        file_dir = osp.join(file_dir, mp_id + '_hg.json')
+        with open(file_dir,'r') as storage:
+            data_read = storage.read()
+            data_read = jsonpickle.decode(data_read)
+        data_dict = dict(data_read)
+        data = HeteroData(data_dict)
         num_nodes = list(data['atom'].hyperedge_attrs.shape)[0]
         data['atom'].num_nodes = torch.tensor(num_nodes).long()
         data['atom'].batch = torch.tensor([0 for i in range(num_nodes)])
@@ -107,12 +123,17 @@ def process_data(idx):
     with open(osp.join('dataset','processed_ids.csv'),'a') as ids:
         try:
             d = dataset[idx]
-            torch.save(d['hgraph'].to_dict(), 'dataset/{}_hg.pt'.format(d['mp_id']))
+            data = d['hgraph']
+            mp_id = data['mp_id']
+            data_dict = data.to_dict()
+            data_list = list(data_dict.items())
+            with open('dataset/{}_hg.json'.format(mp_id),'w') as storage:
+                json_list = jsonpickle.encode(data_list)
+                storage.write(json_list)
             ids.write(d['mp_id']+'\n')
 
         except Exception as error:
-            print(f'Cannot process index {idx}')
-            print(f'Error: {error}')
+            print(f'Cannot process index {idx}: {error}')
 
 
 def run_process(N=None, processes=10):

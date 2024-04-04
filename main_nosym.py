@@ -87,8 +87,12 @@ def train(model, device, train_loader, loss_criterion, accuracy_criterion, optim
         data = data.to(device, non_blocking=True)
         output = torch.squeeze(model(data))
         if task == 'regression':
-            target_norm = torch.squeeze(normalizer.norm(data[target_name]).view((-1,1)))
-            target = torch.squeeze(data[target_name].view((-1,1)))
+            target = torch.tensor([float(i) for i in data[target_name]]).to(device)
+            target_norm = normalizer.norm(target)
+
+            target = torch.squeeze(target)
+            target_norm = torch.squeeze(target_norm)
+
             loss = loss_criterion(output, target_norm)
             accu = accuracy_criterion(normalizer.denorm(output), target)
             losses.update(loss.item(), target_norm.size(0))
@@ -133,10 +137,13 @@ def validate(model, device, test_loader, loss_criterion, accuracy_criterion, epo
         for i, data in enumerate(test_loader):
 
             data = data.to(device, non_blocking=True)
-            output = model(data)
+            output = torch.squeeze(model(data))
             if task == 'regression':
-                target_norm = normalizer.norm(data[target_name]).view((-1,1))
-                target = data[target_name].view((-1,1))
+                target = torch.tensor([float(i) for i in data[target_name]]).to(device)
+                target_norm = normalizer.norm(target)
+                target = torch.squeeze(target)
+                target_norm = torch.squeeze(target_norm)
+
                 loss = loss_criterion(output, target_norm)
                 accu = accuracy_criterion(normalizer.denorm(output), target)
                 losses.update(loss.item(), target_norm.size(0))
@@ -287,9 +294,9 @@ def main():
     if args.normalize == True:
         if len(dataset) < 1000:
             print(dataset[0][args.target])
-            sample_targets = [dataset[i][args.target] for i in range(len(dataset))]
+            sample_targets = [torch.tensor(float(dataset[i][args.target])) for i in range(len(dataset))]
         else:
-            sample_targets = [dataset[i][args.target] for i in sample(range(len(dataset)), 1000)]
+            sample_targets = [torch.tensor(float(dataset[i][args.target])) for i in sample(range(len(dataset)), 1000)]
         normalizer = Normalizer(sample_targets)
         print('normalizer initialized!')
     else:
