@@ -221,7 +221,11 @@ def _collate(
         key = str(key)
         cat_dim = data_list[0].__cat_dim__(key, elem, stores[0])
         if cat_dim is None or elem.dim() == 0:
-            values = [value.unsqueeze(0) for value in values]
+            try:
+                values = [value.unsqueeze(0) for value in values]
+            except Exception as error:
+                print(error)
+                values = [torch.tensor(float(value)).unsqueeze(0) for value in values]
         slices = cumsum([value.size(cat_dim or 0) for value in values])
         if increment:
             incs = get_incs(key, values, data_list, stores)
