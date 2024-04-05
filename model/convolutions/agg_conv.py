@@ -22,9 +22,18 @@ class CHGConv(MessagePassing):
         self.softplus_core = torch.nn.Softplus()
         self.softplus_out = torch.nn.Softplus()
 
-
-        self.hedge_aggr = aggr.SoftmaxAggregation(learn = True)
-        self.node_aggr = aggr.SoftmaxAggregation(learn = True)
+        self.hedge_aggr = aggr.MultiAggregation(
+                            aggrs=['mean', 'std','max','min'],
+                            mode='attn',
+                            mode_kwargs=dict(in_channels=64, out_channels=64, num_heads=4),
+                            )
+        self.node_aggr = aggr.MultiAggregation(
+                            aggrs=['mean', 'std','max','min'],
+                            mode='attn',
+                            mode_kwargs=dict(in_channels=64, out_channels=64, num_heads=4),
+                            )
+        #self.hedge_aggr = aggr.SoftmaxAggregation(learn = True)
+        #self.node_aggr = aggr.SoftmaxAggregation(learn = True)
 
         if batch_norm == True:
             self.bn_f = BatchNorm1d(node_fea_dim)
