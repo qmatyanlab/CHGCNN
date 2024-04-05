@@ -204,14 +204,14 @@ def main():
     parser.add_argument('--pin-memory', default=False, type=bool)
     parser.add_argument('--dir', default='dataset', type=str)
     parser.add_argument('--normalize', default=True, type=bool)
-    parser.add_argument('--target', default = 'form_en', type=str, help='formation energy (form_en), band gap (band_gap) or energy above hull (en_abv_hull) prediction task') 
+    parser.add_argument('--target_name', default = 'form_en', type=str, help='formation energy (form_en), band gap (band_gap) or energy above hull (en_abv_hull) prediction task') 
     parser.add_argument('--scheduler', default=True, type=bool,
             help = 'use scheduler')
 
     args = parser.parse_args()
 
     best_accu = 1e6
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(args.seed)
 
 
@@ -224,8 +224,8 @@ def main():
         # track hyperparameters and run metadata
         config={
         "learning_rate": args.lr,
-        "architecture": "TransformerConv" ,
-        "dataset": "Formation Energy per Atom",
+        "architecture": "Agg" ,
+        "dataset": args.target_name,
         "epochs": args.epochs,
         "batch_size": args.batch_size
         }
@@ -274,33 +274,17 @@ def main():
         pin_memory=args.pin_memory
     )
 
-    #### Set target as y
-    if args.target == 'form_en':
-        print(f'Setting target as formation energy (eV/atom)')
-    elif args.target == 'band_gap':
-        print(f'Setting target as band gap (eV)')
-    elif args.target == 'en_abv_hull':
-        print(f'Setting target as energy above hull (eV)')
-    elif args.target == 'metalicity':
-        args.task = 'classification'
-        args.num_class = 2
-        args.normalize = False
-        print(f'Setting target as metalicity (metal 1/nm 0)')
-    else:
-        print(f'Target {args.target} not found!')
-
     #### Set normalizer (for targets)
-    print(args.normalize)
     if args.normalize == True:
         if len(dataset) < 1000:
-            print(dataset[0][args.target])
-            sample_targets = [torch.tensor(float(dataset[i][args.target])) for i in range(len(dataset))]
+            sample_targets = [torch.tensor(float(dataset[i]['target'])) for i in range(len(dataset))]
         else:
-            sample_targets = [torch.tensor(float(dataset[i][args.target])) for i in sample(range(len(dataset)), 1000)]
+            sample_targets = [torch.tensor(float(dataset[i]['target'])) for i in sample(range(len(dataset)), 1000)]
         normalizer = Normalizer(sample_targets)
-        print('normalizer initialized!')
+        print('Normalizer initialized!')
     else:
         normalizer = None
+        print('No normalizer utilized in main file...')
 
 
     #### Set optimizer
@@ -345,8 +329,8 @@ def main():
     #### Loop through train and test for set number of epochs
     for epoch in range(args.start_epoch, args.epochs + 1):
         train_loss, train_accu = train(model, device, train_loader, loss_criterion, accuracy_criterion, optimizer,
-                                       epoch, args.task, args.target, normalizer, scheduler)
-        val_accu = validate(model, device, val_loader, loss_criterion, accuracy_criterion, epoch, args.task, args.target, normalizer)
+                                       epoch, args.task, 'target', normalizer, scheduler)
+        val_accu = validate(model, device, val_loader, loss_criterion, accuracy_criterion, epoch, args.task, 'target', normalizer)
 
         is_best = train_accu < best_accu
         best_accu = min(train_accu, best_accu)

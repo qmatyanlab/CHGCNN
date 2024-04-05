@@ -60,7 +60,6 @@ class CHGConv(MessagePassing):
         each hyperedge
         '''
         hedge_attr, x = hyperedge_attrs_tuple
-        print(hedge_attr)
         num_nodes = x.shape[0]
         num_hedges = hedge_attr.shape[0]
         hedge_index_xs = x[hyperedge_index[1].int()]
