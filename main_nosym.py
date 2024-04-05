@@ -300,7 +300,8 @@ def main():
 
     #### Set up scheduler
     if args.scheduler == True:
-        scheduler = CosineAnnealingLR(optimizer, T_max = 300, verbose = True)
+        #scheduler = CosineAnnealingLR(optimizer, T_max = 300)
+        scheduler = MultiStepLR(optimizer, milestones = [150,250], gamma=0.1)
 
     #### Set cost and loss functions 
     if args.task == 'regression':
@@ -336,6 +337,7 @@ def main():
         best_accu = min(train_accu, best_accu)
 
         scheduler.step()
+        print(f'STEP: lr ={scheduler.get_last_lr()}')
         save_checkpoint({
             'epoch': epoch,
             'state_dict': model.state_dict(),
