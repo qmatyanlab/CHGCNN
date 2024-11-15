@@ -1,4 +1,4 @@
-# Siamese Equivariant Neural Network for Property Predictions of Point Defects in Solids
+# Crystal Hypergraph Convolutional Neural Networks
 
 Implementation of [Crystal Hypergraph Convolutional Neural Networks]().
 
