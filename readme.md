@@ -6,7 +6,15 @@ Implementation of [Crystal Hypergraph Convolutional Neural Networks]().
 
 If you use our code or method in your work, please cite it as follows:
 ```
-
+@misc{heilman2024crystalhypergraphconvolutionalnetworks,
+      title={Crystal Hypergraph Convolutional Networks}, 
+      author={Alexander J. Heilman and Weiyi Gong and Qimin Yan},
+      year={2024},
+      eprint={2411.12616},
+      archivePrefix={arXiv},
+      primaryClass={cond-mat.mtrl-sci},
+      url={https://arxiv.org/abs/2411.12616}, 
+}
 ```
 
 ##  Prerequisites
